@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Titan+One&display=swap');
+
+:root {
+    --primary-color: #eaebea;
+    --secondary-color: #d8323c;
+    --background-color: #202020;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Titan One", system-ui;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--background-color);
+    color: var(--primary-color);
+}
+
+section {
+    display: flex;
+    width: 100%;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+}
+
+#calc {
+    display: flex;
+    flex-direction: column;
+    max-width: min(75vw, 400px);
+    aspect-ratio: 4/6;
+    padding: min(2vw, 10px);
+    margin: min(2vw, 20px);
+
+    border: double var(--primary-color) min(1vw, 5px);
+    border-radius: min(1vw, 10px);
+    background-color: var(--background-color);
+    box-shadow: 0 0 min(8vw, 40px) black;
+}
+
+#output1, #output2 {
+    display: flex;
+    width: 100%;
+    flex: 1;
+    align-items: center;
+}
+
+#output1 p, #output2 p {
+    width: 100%;
+    height: 75%;
+    font-size: min(10vw, 48px);
+    text-align: right;
+    white-space: nowrap;
+    overflow-x: auto;
+
+    color: var(--secondary-color);
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) transparent;
+}
+
+#output1 p.selected-output, #output2 p.selected-output {
+    color: var(--primary-color);
+}
+
+@media (pointer: coarse) {
+    #result p {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    #result p::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+#buttons {
+    display: flex;
+    flex: 5;
+    flex-wrap: wrap;
+    gap: min(2vw, 10px);
+}
+
+button {
+    width: calc((100% - min(6vw, 30px))/4);
+    font-size: min(10vw, 48px);
+    border: none;
+    border-radius: min(1vw, 10px);
+    color: var(--primary-color);
+    background-color: var(--secondary-color);
+    transition: transform 0.05s ease;
+    box-shadow: 0 0 min(2vw, 40px) black;
+}
+
+button.selected-operator {
+    background-color: var(--background-color);
+}
+
+@media (hover:hover) {
+    button:hover {
+        transform: scale(1.2);
+    }
+    button:active {
+        transform: scale(1.1);
+    }
+}
+
+@media (hover:none) {
+    button:active {
+        transform: scale(0.9);
+    }
+}
