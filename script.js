@@ -1,159 +1,103 @@
-/* STARTING VARIABLES */
+const outputElems = [document.querySelector("#output1 p"), document.querySelector("#output2 p")];
+const buttons = document.getElementById("buttons");
 
-let nums = ['', undefined];
+let nums = ["", undefined];
 let selectedNum = 0;
-let selectedOperator = '';
+let selectedOperator = "";
 
-const outputs = [document.querySelector("#output1 p"), document.querySelector("#output2 p")];
+// Eventos principales
+buttons.addEventListener("click", (e) => {
+  const btn = e.target;
+  if (!btn.tagName.toLowerCase() === "button") return;
 
-/* FULL EVENT LISTENER FOR BUTTONS CONTAINER */
-
-document.querySelector("#buttons")
-.addEventListener("click", (event) => {
-    if (event.target.nodeName.toLowerCase() !== "button") return; // Checks if the click was on a button
-
-    let char = event.target.textContent; // Text content of the button clicked
-
-    // Checks if the button clicked was a number, operator, or modify button and take appropriate action
-    switch (event.target.classList[0]) {
-        case "number": addDigit(char); break;
-        case "operator": operate(char); break;
-        case "modify": modify(char); break;
-    }
+  if (btn.classList.contains("number")) addDigit(btn.dataset.num);
+  if (btn.classList.contains("operator")) setOperator(btn.dataset.op);
+  if (btn.classList.contains("modify")) {
+    if (btn.dataset.fn === "clear") clearLast();
+    if (btn.dataset.fn === "equals") evaluate();
+  }
 });
 
-document.addEventListener("keyup", (event) => {
-    if (event.key === 'Backspace') deleteLastDigit();
-    else if (event.key === "Enter" || event.key === '=') evaluateAnswer();
-    else if ("0123456789.".includes(event.key)) addDigit(event.key);
-    else if ("%^r/*-+=".includes(event.key)) {
-        switch (event.key) {
-            case 'r': operate('√'); break;
-            case '/': operate('÷'); break;
-            case '*': operate('×'); break;
-            default: operate(event.key); break;
-        }
-    }
+document.addEventListener("keyup", (e) => {
+  if ("0123456789.".includes(e.key)) addDigit(e.key);
+  if ("+-*/^%r".includes(e.key)) {
+    if (e.key === "r") setOperator("√");
+    else if (e.key === "*") setOperator("×");
+    else if (e.key === "/") setOperator("÷");
+    else setOperator(e.key);
+  }
+  if (e.key === "Enter" || e.key === "=") evaluate();
+  if (e.key === "Backspace") clearLast();
 });
 
-/* INPUT FUNCTIONS */
-
-function addDigit (digit) {
-    if ( (nums[selectedNum].includes('.') || nums[selectedNum] === '') && digit === '.' ) { return; } // Prevent adding '.' twice or as the first character
-    updateSelectedNum(nums[selectedNum] + digit); // Add the digit given to selected number
+// FUNCIONES PRINCIPALES
+function addDigit(digit) {
+  if (digit === "." && nums[selectedNum].includes(".")) return;
+  updateNum(nums[selectedNum] + digit);
 }
 
-function modify (button) {
-    if (button === 'C') { deleteLastDigit(); }
-    if (button === '=') { evaluateAnswer(); }
+function setOperator(op) {
+  if (!nums[0]) return;
+  if (selectedNum === 0) updateOperator(op);
+  else if (selectedNum === 1) {
+    selectedOperator === op ? evaluate(op) : updateOperator(op);
+  }
 }
 
-function deleteLastDigit () {
-    if (nums[selectedNum]) updateSelectedNum(nums[selectedNum].slice(0, -1)); // Delete last character if selected number isn't empty
-    else if (selectedNum === 1) selectNum(0); // Select first number if second number is empty
+function evaluate(nextOperator = "") {
+  if (!nums[1]) return;
+  const x = roundToFour(Number(nums[0]));
+  const y = roundToFour(Number(nums[1]));
+  let res;
+
+  switch (selectedOperator) {
+    case "+": res = x + y; break;
+    case "-": res = x - y; break;
+    case "×": res = x * y; break;
+    case "÷": res = x / y; break;
+    case "^": res = x ** y; break;
+    case "√": res = x ** (1 / y); break;
+    case "%": res = (x * y) / 100; break;
+  }
+
+  nums = ["", undefined];
+  selectNum(nextOperator ? 1 : 0);
+  updateOperator(nextOperator);
+  updateNum(roundToFour(res), 0);
 }
 
-function operate (operator) {
-    if (nums[0] === '') return;
-
-    if (selectedNum === 0) {
-        updateOperator(operator); // Set the newly selected operator
-    }
-    else if (selectedNum === 1) {
-        selectedOperator === operator
-        ? evaluateAnswer(operator) // Evaluate answer and pass current operator for next operation if selected operator is selected again
-        : updateOperator(operator); // Change operator if a new one is selected
-    }
+// FUNCIONES AUXILIARES
+function updateNum(val = nums[selectedNum], num = selectedNum) {
+  nums[num] = val + "";
+  outputElems.forEach((el, i) => {
+    el.textContent = nums[i] || "";
+    i === num ? el.classList.add("selected-output") : el.classList.remove("selected-output");
+  });
 }
 
-function evaluateAnswer (operator = '') {
-    if (!nums[1]) return; // Return if second number is empty
-
-    // Get both numbers rounded to 4th decimal place
-    let x = roundToFourDecimals(Number(nums[0]));
-    let y = roundToFourDecimals(Number(nums[1]));
-    
-    if (Number.isNaN(x) || Number.isNaN(y)) return; // Return if any number is invalid
-    
-    let result;
-    
-    // Calculate result based on selected operator
-    switch (selectedOperator) {
-        case '+':
-            result = x + y; 
-            break;
-        case '-':
-            result = x - y;
-            break;
-        case '×':
-            result = x * y;
-            break;
-        case '÷':
-            result = x / y;
-            break;
-        case '^':
-            result = x ** y;
-            break;
-        case '√':
-            result = x ** (1 / y);
-            break;
-        case '%':
-            result = (x * y) / 100;
-            break;
-    }
-
-    // Round result to 4th decimal place
-    result = roundToFourDecimals(result);
-
-    // Reset values of nums array and currentNum
-    nums = ['', undefined];
-    selectNum(operator ? 1 : 0); // If an extra operator was passed, select second number, and select first number otherwise
-    updateOperator(operator);
-    
-    // Set value of first number to results
-    updateSelectedNum(result, 0);
+function updateOperator(op) {
+  selectedOperator = op;
+  [...buttons.children].forEach(btn => {
+    btn.textContent === op ? btn.classList.add("selected-operator") : btn.classList.remove("selected-operator");
+  });
+  if (op) selectNum(1);
 }
 
-/* EXTRA FUNCTIONS */
-
-function selectNum (num) {
-    selectedNum = num; // Set current num to the desired value
-
-    if (selectedNum === 1) { updateSelectedNum(''); } // Set second number to an empty string instead of undefined if it's selected
-    else if (selectedNum === 0) { // Reset second number to undefined, clear selected operator and update outputs if first number is selected
-        nums[1] = undefined;
-        updateOperator('');
-        updateSelectedNum();
-    }
+function selectNum(num) {
+  selectedNum = num;
+  if (num === 1) updateNum("");
+  else if (num === 0) {
+    nums[1] = undefined;
+    updateOperator("");
+    updateNum();
+  }
 }
 
-function updateSelectedNum (str = nums[selectedNum], num = selectedNum) { // str: value to update selected num to, num: select num manually if needed
-    nums[num] = str + ''; // Set selected num value
-
-    // Loop through all output displays and add 'selected-output' class to the selected output display and remove 'selected-output' class from any output displays not selected
-    outputs.forEach( (output, i) => {
-        output.textContent = nums[i];
-        i === num
-        ? output.classList.add("selected-output")
-        : output.classList.remove("selected-output");
-    });
+function clearLast() {
+  if (nums[selectedNum]) updateNum(nums[selectedNum].slice(0, -1));
+  else if (selectedNum === 1) selectNum(0);
 }
 
-function updateOperator (operatorSymbol) {
-    selectedOperator = operatorSymbol; // Set operator
-
-    // Loop through all buttons and add 'selected-operator' class to the selected operator button and remove 'selected-operator' from any buttons not selected
-    [...buttons.children].forEach((button) => {
-        button.textContent === operatorSymbol
-        ? button.classList.add("selected-operator")
-        : button.classList.remove("selected-operator");
-    });
-
-    operatorSymbol && selectNum(1); // Select second number if an operator was given to be chosen
-}
-
-function roundToFourDecimals (num) {
-    let numStr = num + '';
-    if ( (numStr.includes('.')) && numStr.split('.')[1].length <= 4 ) return num;
-    else return parseFloat(num.toFixed(4));
+function roundToFour(n) {
+  return Math.round(n * 10000) / 10000;
 }
